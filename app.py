@@ -16,16 +16,12 @@ from auto_update import send_startup_notification
 app = Flask(__name__)
 app.config['CACHE_DURATION'] = int(os.getenv('CACHE_DURATION', 300))
 start_background_scheduler()  #  백그라운드 스케줄러 시작
-send_startup_notification()  # 스타트업 알림 전송
-
-update_logs = []
-update_running = False
-lock = threading.Lock()
+send_startup_notification()  # 스타트업 알림 전송 
 
 class CacheManager:
     _instance = None
     _lock = threading.Lock()
-
+    
     def __new__(cls):
         with cls._lock:
             if not cls._instance:
@@ -57,14 +53,14 @@ def parse_safe(version_str: str) -> Optional[version.Version]:
         return version.parse(version_str.lstrip('v'))
     except (InvalidVersion, AttributeError):
         return None
-
+        
 def get_cache(key: str) -> Any:
     entry = cache.store.get(key)
     return entry['data'] if entry and datetime.now() < entry['expiry'] else None
 
 def set_cache(key: str, data: Any):
     cache.store[key] = {
-        'data': data,
+        'data': data, 
         'expiry': datetime.now() + get_cache_duration()
     }
 
@@ -83,7 +79,7 @@ def get_github_headers():
 def get_latest_release():
     if cached := get_cache(CacheKeys.LATEST_RELEASE):
         return cached
-
+        
     try:
         response = requests.get(
             "https://api.github.com/repos/immich-app/immich/releases/latest",
@@ -101,7 +97,7 @@ def get_latest_release():
 def get_all_releases():
     if cached := get_cache(CacheKeys.ALL_RELEASES):
         return cached
-
+        
     try:
         response = requests.get(
             "https://api.github.com/repos/immich-app/immich/releases",
@@ -119,7 +115,7 @@ def get_release_notes(version):
     cache_key = CacheKeys.RELEASE_NOTES.format(version)
     if cached := get_cache(cache_key):
         return cached
-
+        
     try:
         response = requests.get(
             f"https://api.github.com/repos/immich-app/immich/releases/tags/{version}",
@@ -147,7 +143,7 @@ def has_actual_warning(notes):
 def check_release_warnings(current, latest):
     if cached := get_cache(CacheKeys.RELEASE_WARNINGS):
         return cached
-
+        
     warnings = []
     current_ver = parse_safe(current) if current else None
     latest_ver = parse_safe(latest) if latest else None
@@ -160,7 +156,7 @@ def check_release_warnings(current, latest):
         return warnings
 
     all_versions = get_all_releases()
-
+    
     if current_ver and latest_ver and current_ver < latest_ver:
         for ver in all_versions:
             v = parse_safe(ver)
@@ -168,10 +164,10 @@ def check_release_warnings(current, latest):
                 notes = get_release_notes(ver)
                 if has_actual_warning(notes):
                     warnings.append(f"⚠️ {ver} 버전에 주요 변경사항 포함")
-
+    
     set_cache(CacheKeys.RELEASE_WARNINGS, warnings)
-    return warnings
-
+    return warnings 
+    
 # REMOVE: def get_image_digest(image_name):
 #     # ...existing code...
 
@@ -219,13 +215,13 @@ def find_containers_using_image(image_name):
     try:
         target_base = normalize_image_name(image_name or IMMICH_IMAGE_BASE)
         target_leaf = target_base.split('/')[-1]
-
+        
         # 모든 컨테이너 검색 (-a 옵션 추가)
         result = subprocess.check_output(
             ["docker", "ps", "-a", "--format", "{{.Names}}\t{{.Image}}"],
             universal_newlines=True
         ).strip().split('\n')
-
+        
         containers = []
         for line in result:
             if not line:
@@ -243,7 +239,7 @@ def find_containers_using_image(image_name):
                     print(f"컨테이너 발견: {name} (이미지: {image})")  # 디버깅 로그
             except ValueError:
                 continue
-
+        
         print(f"발견된 Immich 컨테이너: {containers}")  # 디버깅 로그
         return containers
 
@@ -324,7 +320,7 @@ def get_version_info():
     current = get_image_version()
     latest = get_latest_release()
     warnings = check_release_warnings(current, latest) if current and latest else []
-
+    
     return jsonify({
         "latest_version": latest,
         "warnings": warnings
@@ -349,33 +345,33 @@ def check_version():
         warnings = check_release_warnings(current, latest)
     else:
         warnings = get_cache(CacheKeys.RELEASE_WARNINGS)
-
+        
     content = ""
     if warnings:
         content += "<div class='alert alert-warning mb-3'>"
         content += "<h5 class='mb-2'>⚠️ 버전 업데이트 경고 히스토리</h5>"
         for warning in warnings:
             ver = re.search(r'v\d+\.\d+\.\d+', warning).group()
-            content += f"""<a href="https://github.com/immich-app/immich/releases/tag/{ver}"
+            content += f"""<a href="https://github.com/immich-app/immich/releases/tag/{ver}" 
                target="_blank" class="text-decoration-none d-block mb-1">→ {ver} 릴리즈 노트</a>"""
         content += "</div>"
-
+    
     if latest := get_cache(CacheKeys.LATEST_RELEASE):
         content += f"""<div class='alert alert-info'><strong>최신 릴리즈:</strong> {latest}
-            <a href="https://github.com/immich-app/immich/releases" target="_blank"
+            <a href="https://github.com/immich-app/immich/releases" target="_blank" 
             class="text-decoration-none d-block mt-1">→ 전체 릴리즈 확인</a></div>"""
-
+    
     return content
 
 @app.route("/check_containers")
 def check_containers():
     containers = find_containers_using_image(IMMICH_IMAGE_BASE)
-
+    
     if not containers:
         return """<div class='alert alert-danger p-3'>
                     ⚠️ 실행 중인 컨테이너가 없습니다. 업데이트가 불가능합니다.
                   </div>"""
-
+    
     container_list = "<br>".join([f"• {c}" for c in containers])
     return f"""
 <h5 class='text-warning'>⚠️ 업데이트 전 확인</h5>
@@ -391,108 +387,11 @@ function startUpdate() {{
 </script>
     """
 
-def run_update():
-    global update_logs, update_running
-
-    detect_image = IMMICH_IMAGE_BASE
-    target_image = IMMICH_IMAGE
-
-    try:
-        with lock:
-            update_logs.append("업데이트 시작...\n")
-
-        containers = find_containers_using_image(detect_image)
-
-        if not containers:
-            with lock:
-                update_logs.append("실행 중인 컨테이너가 없습니다.\n")
-            return
-
-        project_paths = set()
-        for container in containers:
-            project_path = find_project_path(container)
-            if project_path:
-                project_paths.add(project_path)
-
-        for project_path in project_paths:
-            yaml_file = find_compose_file(project_path)
-
-            if not yaml_file:
-                with lock:
-                    update_logs.append(f"{project_path}: compose 파일 없음\n")
-                continue
-
-            subprocess.run(
-                ["docker-compose", "-f", yaml_file, "down"],
-                cwd=project_path,
-                check=True
-            )
-
-            with lock:
-                update_logs.append(f"{project_path}: down 완료\n")
-
-        subprocess.run(["docker", "rmi", "-f", target_image], check=True)
-        with lock:
-            update_logs.append("기존 이미지 삭제 완료\n")
-
-        subprocess.run(["docker", "pull", target_image], check=True)
-        with lock:
-            update_logs.append("최신 이미지 pull 완료\n")
-
-        for project_path in project_paths:
-            yaml_file = find_compose_file(project_path)
-
-            subprocess.run(
-                ["docker-compose", "-f", yaml_file, "up", "-d"],
-                cwd=project_path,
-                check=True
-            )
-
-            with lock:
-                update_logs.append(f"{project_path}: up 완료\n")
-
-        with lock:
-            update_logs.append("업데이트 완료 ✅\n")
-
-    except Exception as e:
-        with lock:
-            update_logs.append(f"오류 발생: {str(e)}\n")
-
-    finally:
-        update_running = False
-
-
-@app.route("/update_project", methods=["POST"]) 
-def update_project():
-    global update_logs, update_running
-
-    if update_running:
-        return jsonify({"status": "already_running"})
-
-    update_logs = []
-    update_running = True
-
-    thread = threading.Thread(target=run_update)
-    thread.start()
-
-    return jsonify({"status": "started"})
-    
-
-@app.route("/update_status")
-def update_status():
-    global update_logs, update_running
-
-    with lock:
-        return jsonify({
-            "running": update_running,
-            "logs": update_logs
-        })
-        
+@app.route("/update_project", methods=["POST"])
 def update_project_stream():
     def generate_logs():
-        detect_image = IMMICH_IMAGE_BASE
         target_image = IMMICH_IMAGE
-        containers = find_containers_using_image(detect_image)
+        containers = find_containers_using_image(IMMICH_IMAGE_BASE)
 
         if not containers:
             yield "해당 이미지를 사용하는 실행 중인 컨테이너가 없습니다.\n"
@@ -546,32 +445,12 @@ def update_project_stream():
 
 @app.route("/view_logs")
 def view_logs():
-    #target_image = "ghcr.io/immich-app/immich-server:release"
-    target_image_base = "ghcr.io/immich-app/immich-server"
+    target_image = IMMICH_IMAGE_BASE
     try:
-        #result = subprocess.check_output(
-        #    ["docker", "ps", "--filter", f"ancestor={target_image}", "--format", "{{.Names}}"],
-        #    universal_newlines=True
-        #).strip()
-        
-        raw_result = subprocess.check_output(
-            ["docker", "ps", "--format", "{{.Names}}\t{{.Image}}"],
+        result = subprocess.check_output(
+            ["docker", "ps", "--filter", f"ancestor={target_image}", "--format", "{{.Names}}"],
             universal_newlines=True
-        )
-        
-        matched_names = []
-
-        for line in raw_result.splitlines():
-            parts = line.split("\t")
-            if len(parts) != 2:
-                continue
-
-            name, image = parts
-            if image.startswith(target_image_base):
-                matched_names.append(name)
-
-        # 여기서 result를 우리가 다시 만들어줌
-        result = "\n".join(matched_names).strip()
+        ).strip()
 
         if not result:
             return "해당 이미지를 사용하는 실행 중인 컨테이너가 없습니다."
@@ -602,7 +481,7 @@ def help_page():
   <li><strong>Immich 자동 업데이트, 텔레그램과 디스코드 알림, 이미지 백업과 복원을 지원 합니다.</strong></li>
 </ul>
 <p>문제가 발생하거나 추가적인 도움말이 필요하다면 관리자에게 문의하세요.</p>
-<p> v1.11 가이드 링크: <a href="https://svrforum.com/nas/2071086" target="_blank">https://svrforum.com/nas/2071086</a></p>
+<p> v1.12 가이드 링크: <a href="https://svrforum.com/nas/2071086" target="_blank">https://svrforum.com/nas/2071086</a></p>
 """
     return help_content
 
@@ -616,7 +495,7 @@ def force_refresh():
     cache.store.clear()  # ✅ 올바르게 캐시 초기화
     return "캐시가 갱신되었습니다", 200
 
-
+    
 # Rate Limit 상태 확인 엔드포인트
 @app.route("/rate_limit")
 def check_rate_limit():
@@ -646,13 +525,13 @@ def backup_files():
         print(f"현재 작업 디렉토리: {os.getcwd()}")
         print(f"백업 경로 (BACKUP_PATH): {BACKUP_PATH}")
         print(f"백업 경로 존재 여부: {os.path.exists(BACKUP_PATH)}")
-
+        
         if os.path.exists(BACKUP_PATH):
             # 디렉토리 권한 확인
             stat_info = os.stat(BACKUP_PATH)
             print(f"디렉토리 권한: {oct(stat_info.st_mode)[-3:]}")
             print(f"소유자: {stat_info.st_uid}, 그룹: {stat_info.st_gid}")
-
+            
             # 디렉토리 내용물 확인
             print(f"디렉토리 내용:")
             for item in os.listdir(BACKUP_PATH):
@@ -661,27 +540,27 @@ def backup_files():
         # 정확한 패턴 매칭으로 파일 검색
         backup_pattern = os.path.join(BACKUP_PATH, "immich_backup_*.tar")
         backup_files = []
-
+        
         # os.walk를 사용하여 더 안정적인 파일 검색
         for root, dirs, files in os.walk(BACKUP_PATH):
             for file in files:
                 if file.startswith("immich_backup_") and file.endswith(".tar"):
                     full_path = os.path.join(root, file)
                     backup_files.append(full_path)
-
+        
         if not backup_files:
             print("백업 파일을 찾을 수 없음")
             return jsonify([])
 
         # 파일 정렬 (최신 순)
         backup_files = sorted(backup_files, key=os.path.getctime, reverse=True)
-
+        
         # 전체 경로에서 파일명만 추출
         backup_files = [os.path.basename(f) for f in backup_files]
-
+        
         print(f"찾은 백업 파일 목록: {backup_files}")  # 디버깅용
         return jsonify(backup_files)
-
+        
     except Exception as e:
         print(f"백업 파일 목록 조회 오류: {str(e)}")
         import traceback
@@ -696,19 +575,19 @@ def restore_backup_route():
 
     try:
         print(f"[시작] 복원 시작: {backup_file}")
-
+        
         result = subprocess.run(
             ["python", "/app/restore_backup.py", backup_file],
             capture_output=True,
             text=True
         )
-
+        
         output = result.stdout  # stderr는 제외하고 stdout만 표시
-
+        
         if result.returncode != 0:
             return f"복원 실패:\n{output}", 500
         return output, 200
-
+        
     except Exception as e:
         return f"복원 프로세스 실행 중 오류 발생: {str(e)}", 500
 

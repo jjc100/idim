@@ -1,0 +1,274 @@
+/* static/css/style.css */
+
+/* ==================== 기본 테마 설정 ==================== */
+/* 라이트 모드 */
+body.light-mode {
+    background-color: #F8F9FA;
+    color: #01257D;
+}
+
+/* 다크 모드 */
+body.dark-mode {
+    background-color: #121212;
+    color: #E0E0E0;
+}
+
+/* ==================== 버전 정보 표시 스타일 ==================== */
+.position-fixed {
+    left: 20px;
+    bottom: 20px;
+    z-index: 1051;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+    background-color: var(--bs-light-bg);
+    transition: opacity 0.3s ease;
+}
+
+.position-fixed small {
+    color: var(--bs-body-color) !important;
+    font-size: 0.85em;
+}
+
+/* 다크 모드 전용 스타일 */
+body.dark-mode .position-fixed {
+    background-color: var(--bs-dark-bg) !important;
+}
+
+body.dark-mode .position-fixed small {
+    color: var(--bs-light-color) !important;
+}
+
+
+/* ==================== 헤더 영역 스타일 ==================== */
+/* 기본 헤더 스타일 */
+.header, .navbar {
+    background-color: #F8F9FA;
+    color: #01257D;
+}
+
+/* 로고 텍스트 스타일 */
+.header .logo, .navbar .logo {
+    color: #01257D;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+/* 다크 모드 헤더 */
+body.dark-mode .header, 
+body.dark-mode .navbar {
+    background-color: #1E1E1E !important;
+    color: #E0E0E0 !important;
+}
+
+/* 다크 모드 로고 */
+body.dark-mode .header .logo, 
+body.dark-mode .navbar .logo {
+    color: #FFFFFF !important;
+}
+
+/* ==================== 공통 요소 스타일 ==================== */
+/* 메인 제목 */
+h1 {
+    color: inherit;
+    margin-bottom: 1rem;
+}
+
+/* ==================== 버튼 스타일 ==================== */
+/* 기본 버튼 설정 */
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+}
+
+/* 주요 버튼 (파랑) */
+.btn-primary {
+    background-color: #0D6BA5 !important;
+    border-color: #0D6BA5 !important;
+    color: #FFFFFF !important;
+}
+
+/* 주요 버튼 호버 효과 */
+.btn-primary:hover {
+    background-color: #0F7FBF !important;
+    border-color: #0F7FBF !important;
+}
+
+/* 업데이트 버튼 (빨강) */
+.btn-update {
+    background-color: #FF6F61 !important;
+    border-color: #FF6F61 !important;
+    color: #FFFFFF !important;
+}
+
+/* 업데이트 버튼 호버 효과 */
+.btn-update:hover {
+    background-color: #FF8578 !important;
+    border-color: #FF8578 !important;
+}
+
+/* 다크 모드 업데이트 버튼 */
+body.dark-mode .btn-update {
+    background-color: #D9534F !important;
+    border-color: #D9534F !important;
+}
+
+/* 다크 모드 호버 효과 */
+body.dark-mode .btn-update:hover {
+    background-color: #E57373 !important;
+    border-color: #E57373 !important;
+}
+
+/* ==================== 모달 창 스타일 ==================== */
+/* 모달 기본 틀 */
+.modal-content {
+    border-radius: 8px;
+}
+
+/* 라이트 모드 모달 */
+.modal-content {
+    background-color: #FFFFFF;
+    color: #000000;
+}
+
+/* 다크 모드 모달 */
+body.dark-mode .modal-content {
+    background-color: #1E1E1E !important;
+    color: #E0E0E0 !important;
+}
+
+/* 다크 모드 경계선 색상 */
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    border-color: #333333 !important;
+}
+
+/* 모달 내용 영역 */
+.modal-body {
+    padding: 20px;
+    word-break: break-word;
+}
+
+/* 모달 텍스트 요소 간격 */
+.modal-body p, .modal-body ul, .modal-body li {
+    line-height: 0.95;
+    margin-bottom: 0.5rem;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 결과 출력 서식 */
+#resultContent {
+    white-space: pre-wrap;
+}
+
+/* 다크 모드 닫기 버튼 */
+body.dark-mode .btn-close {
+    filter: invert(1);
+}
+
+/* ==================== 알림창 스타일 ==================== */
+.alert {
+    word-wrap: break-word;
+    padding: 15px;
+}
+
+/* ==================== 반응형 디자인 ==================== */
+/* 기본 모달 크기 */
+.modal-dialog {
+    max-width: 700px;
+    margin: 2rem auto;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    /* 모달 크기 조정 */
+    .modal-dialog {
+        max-width: 95%;
+        margin: 1rem auto;
+    }
+    
+    /* 내용 영역 패딩 축소 */
+    .modal-body {
+        padding: 10px;
+    }
+    
+    /* 모바일 텍스트 간격 */
+    p, ul, li {
+        font-size: 1rem;
+        line-height: 1.1;
+        margin-bottom: 0.4rem;
+    }
+    
+    /* 목록 스타일 조정 */
+    ul {
+        padding-left: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    li {
+        margin-bottom: 0.4rem;
+    }
+}
+
+/* ==================== 링크 스타일 ==================== */
+/* 기본 링크 */
+.navbar a, .header a {
+    color: #01257D;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* 다크 모드 링크 */
+body.dark-mode .navbar a, 
+body.dark-mode .header a {
+    color: #FFFFFF !important;
+}
+
+/* ==================== 사용자 정의 수정 사항 ==================== */
+/* 모달 제목-본문 간격 조정 (사용자 요청 사항) */
+.modal-header h5 { 
+    margin-bottom: 0rem !important; 
+}
+
+/* 모달 본문 간격 조정 */
+.modal-body p { 
+    margin-bottom: 0.5rem !important; 
+}
+
+/* 모달 배경 잔상 방지 (사용자 요청 사항) */
+.modal-backdrop { 
+    z-index: 1040 !important; 
+}
+
+/* ==================== 관리자 페이지 스타일 ==================== */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background-color: #F8F9FA;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+body.dark-mode .card {
+    background-color: #1E1E1E;
+    border-color: #333333;
+}
+
+body.dark-mode .card-header {
+    background-color: #2D2D2D;
+    border-color: #333333;
+}
+
+pre {
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-radius: 4px;
+    color: #333;
+}
+
+body.dark-mode pre {
+    background-color: #2D2D2D;
+    color: #E0E0E0;
+}

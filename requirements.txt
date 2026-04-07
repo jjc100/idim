@@ -1,0 +1,8 @@
+Flask==3.1.0
+requests==2.31.0
+packaging==24.0
+apscheduler==3.11.0
+python-dotenv==1.0.0  # 환경 변수 관리를 위해 추가
+python-telegram-bot==20.3
+pytz==2023.3
+discord.py==2.3.2

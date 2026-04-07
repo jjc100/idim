@@ -9,12 +9,12 @@
     <p>현재 설치된 Immich Docker 이미지와 최신 릴리즈 정보를 확인하고 관리하세요.</p>
 
     <div class="alert alert-info mt-4">
-        <strong>현재 버전:</strong> {{ current_version }}<br>
-        <strong>최신 버전:</strong> <span data-field="latest_version">확인 중...</span><br>
-        </div>
+    	<strong>현재 버전:</strong> {{ current_version }}<br>
+    	<strong>최신 버전:</strong> <span data-field="latest_version">확인 중...</span><br>
+	</div>
 
     <div id="warnings"></div>
-
+    
     <div class="row g-3 mt-4">
         <div class="col-12 col-md-6">
             <button type="button" class="btn btn-primary btn-lg w-100" onclick="fetchData('/check_version', '최신 버전 확인', 'resultModal')">최신 버전 확인</button>
@@ -67,9 +67,9 @@
     </div>
   </div>
 </div>
-<div class="position-fixed bottom-0 start-0 p-2 version-info rounded-3 shadow-sm"
+<div class="position-fixed bottom-0 start-0 p-2 version-info rounded-3 shadow-sm" 
      style="z-index: 1051; left:20px; bottom:20px;">
-    <small>IDIM v1.11</small>
+    <small>IDIM v1.12</small>
 </div>
 <script>
 // 기존 스크립트에 추가
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             // 최신 버전 정보 업데이트
             document.querySelector('[data-field="latest_version"]').textContent = data.latest_version;
-
+            
             // 경고 메시지가 있으면 표시
             if (data.warnings && data.warnings.length > 0) {
                 const warningsHtml = `
@@ -90,8 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${data.warnings.map(w => w).join('<br>')}
                         </div>
                         <small class="text-muted">
-                            <a href="https://github.com/immich-app/immich/releases"
-                               target="_blank"
+                            <a href="https://github.com/immich-app/immich/releases" 
+                               target="_blank" 
                                class="text-decoration-none">전체 릴리즈 노트 확인</a>
                         </small>
                     </div>`;
@@ -126,7 +126,7 @@ async function fetchData(url, title, modalId) {
             method: url === '/update_project' ? 'POST' : 'GET'
         });
         const data = await response.text();
-
+        
         modalBody.innerHTML = data;
         const scripts = modalBody.getElementsByTagName('script');
         Array.from(scripts).forEach(script => {
@@ -150,15 +150,14 @@ function startUpdate() {
 </script>
 
 <style>
-.modal-header h5 {
-    margin-bottom: 0.5rem !important;
+.modal-header h5 { 
+    margin-bottom: 0.5rem !important; 
 }
-.modal-body p {
-    margin-bottom: 0.5rem !important;
+.modal-body p { 
+    margin-bottom: 0.5rem !important; 
 }
-.modal-backdrop {
-    z-index: 1040 !important;
+.modal-backdrop { 
+    z-index: 1040 !important; 
 }
 </style>
 {% endblock %}
-

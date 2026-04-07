@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IDIM 관리자 페이지</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="dark-mode">  <!-- body에 dark-mode 클래스 추가 -->
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>관리자 페이지</h1>
+            <a href="/" class="btn btn-primary">메인페이지로 돌아가기</a>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">캐시 강제 갱신</h2>
+            </div>
+            <div class="card-body">
+                <button onclick="forceRefresh()" class="btn btn-update">강제 새로고침</button>
+                <pre id="force-refresh-result" class="mt-3"></pre>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">캐시 저장소 상태</h2>
+            </div>
+            <div class="card-body">
+                <pre id="cache-status-result"></pre>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Rate Limit 상태</h2>
+            </div>
+            <div class="card-body">
+                <pre id="rate-limit-result"></pre>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h2 class="h5 mb-0 text-light">백업 복원</h2>
+            </div>
+            <div class="card-body bg-dark text-light">
+                <form id="restore-form">
+                    <div class="mb-3">
+                        <label for="backup-file" class="form-label">백업 파일 선택</label>
+                        <select class="form-select bg-dark text-light border-secondary" id="backup-file" name="backup_file" required>
+                            <!-- 백업 파일 목록이 여기에 추가됩니다 -->
+                        </select>
+                    </div>
+                    <button type="button" onclick="handleRestore()" class="btn btn-primary btn-lg w-100">
+                        백업 복원하기
+                    </button>
+                </form>
+                <pre id="restore-result" class="mt-3 text-light"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function forceRefresh() {
+            fetch('/force_refresh')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('force-refresh-result').innerText = data;
+                    fetchCacheStatus();
+                });
+        }
+
+        function fetchCacheStatus() {
+            fetch('/cache_status')
+                .then(response => response.json())
+                .then(data => {
+                    const formatted = JSON.stringify(data, null, 2);
+                    document.getElementById('cache-status-result').innerText = formatted;
+                });
+        }
+
+        function fetchRateLimit() {
+            fetch('/rate_limit')
+                .then(response => response.json())
+                .then(data => {
+                    const formatted = JSON.stringify(data, null, 2);
+                    document.getElementById('rate-limit-result').innerText = formatted;
+                });
+        }
+
+        function fetchBackupFiles() {
+            console.log('백업 파일 목록 가져오기 시작');  // 디버깅용 로그
+            fetch('/backup_files')
+                .then(response => {
+                    console.log('응답 받음:', response);  // 디버깅용 로그
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('받은 데이터:', data);  // 디버깅용 로그
+                    const select = document.getElementById('backup-file');
+                    select.innerHTML = '';
+                    if (data && data.length > 0) {
+                        data.forEach(file => {
+                            const option = document.createElement('option');
+                            option.value = file;
+                            option.textContent = file;
+                            select.appendChild(option);
+                        });
+                        console.log('백업 파일 목록 업데이트 완료');  // 디버깅용 로그
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = '사용 가능한 백업 파일이 없습니다';
+                        select.appendChild(option);
+                        console.log('백업 파일이 없음');  // 디버깅용 로그
+                    }
+                })
+                .catch(error => {
+                    console.error('백업 파일 목록 가져오기 오류:', error);  // 디버깅용 로그
+                });
+        }
+
+        let currentFormData = null;  // 폼 데이터 저장용 변수
+
+        // DOM이 로드된 후 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('페이지 로드됨');  // 디버깅용 로그
+            fetchBackupFiles();
+            
+            // 백업 복원 폼 제출 처리
+            const form = document.getElementById('restore-form');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    const selectedFile = document.getElementById('backup-file').value;
+                    if (!selectedFile) {
+                        alert('백업 파일을 선택해주세요.');
+                        return;
+                    }
+
+                    // 폼 데이터 저장
+                    currentFormData = new FormData(event.target);
+                    
+                    // 모달 표시
+                    const confirmModal = new bootstrap.Modal(document.getElementById('confirmRestoreModal'));
+                    confirmModal.show();
+                });
+            }
+        });
+
+        // 실제 복원 처리 함수
+        function proceedRestore() {
+            if (!currentFormData) return;
+
+            // 모달 닫기
+            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmRestoreModal'));
+            confirmModal.hide();
+
+            // 로딩 메시지 표시
+            const resultElement = document.getElementById('restore-result');
+            resultElement.innerText = '복원 작업 진행 중...';
+            resultElement.style.color = '#ffffff';
+
+            fetch('/restore_backup', {
+                method: 'POST',
+                body: currentFormData
+            })
+            .then(response => response.text())
+            .then(data => {
+                resultElement.innerText = data;
+                resultElement.style.color = '#ffffff';
+                
+                // 성공적으로 복원되면 백업 목록 새로고침
+                fetchBackupFiles();
+            })
+            .catch(error => {
+                console.error('복원 중 오류:', error);
+                resultElement.innerText = '복원 중 오류가 발생했습니다: ' + error;
+                resultElement.style.color = '#ff6b6b';
+            });
+        }
+
+        function showRestoreConfirm() {
+            const selectedFile = document.getElementById('backup-file').value;
+            if (!selectedFile) {
+                alert('백업 파일을 선택해주세요.');
+                return;
+            }
+            
+            // 현재 선택된 백업 파일 이름을 모달에 표시
+            document.getElementById('selected-backup-name').textContent = selectedFile;
+            
+            // 폼 데이터 준비
+            const form = document.getElementById('restore-form');
+            currentFormData = new FormData(form);
+            
+            // 모달 표시
+            const modal = new bootstrap.Modal(document.getElementById('confirmRestoreModal'));
+            modal.show();
+        }
+
+        function handleRestore() {
+            const selectedFile = document.getElementById('backup-file').value;
+            if (!selectedFile) {
+                alert('백업 파일을 선택해주세요.');
+                return;
+            }
+
+            const confirmed = confirm(
+                `정말로 "${selectedFile}" 백업 파일을 복원하시겠습니까?\n\n` +
+                `⚠️ 주의: 이 작업은 현재 실행 중인 컨테이너를 중지하고 이미지를 변경합니다.`
+            );
+
+            if (confirmed) {
+                const form = document.getElementById('restore-form');
+                const formData = new FormData(form);
+                const resultElement = document.getElementById('restore-result');
+                
+                resultElement.innerText = '복원 작업 진행 중...';
+                resultElement.style.color = '#ffffff';
+
+                fetch('/restore_backup', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(data => {
+                    resultElement.innerText = data;
+                    resultElement.style.color = '#ffffff';
+                    fetchBackupFiles();  // 백업 목록 새로고침
+                })
+                .catch(error => {
+                    console.error('복원 중 오류:', error);
+                    resultElement.innerText = '복원 중 오류가 발생했습니다: ' + error;
+                    resultElement.style.color = '#ff6b6b';
+                });
+            }
+        }
+
+        // 초기 데이터 로드
+        fetchRateLimit();
+        fetchCacheStatus();
+        fetchBackupFiles();
+
+        // 5분마다 데이터 자동 새로고침
+        setInterval(() => {
+            fetchRateLimit();
+            fetchCacheStatus();
+            fetchBackupFiles();
+        }, 300000);
+    </script>
+
+    <!-- 스타일 추가 -->
+    <style>
+    .btn-restore {
+        background-color: #0d6efd;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+
+    .btn-restore:hover {
+        background-color: #0b5ed7;
+    }
+
+    .form-select {
+        margin-bottom: 1rem;
+    }
+
+    #restore-result {
+        background-color: #2d3436;  /* 어두운 배경 */
+        color: #ffffff;  /* 밝은 텍스트 */
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-top: 1rem;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+
+    /* 다크 모드용 모달 스타일 */
+    .modal-content {
+        background-color: #2d3436;
+        color: #ffffff;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #4a4a4a;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #4a4a4a;
+    }
+
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* 다크 모드용 셀렉트 박스 스타일 */
+    .form-select {
+        background-color: #2d3436 !important;
+        color: #ffffff !important;
+        border-color: #4a4a4a !important;
+    }
+
+    .form-select:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    }
+
+    /* 복원 버튼 스타일 */
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+        padding: 0.75rem 1.25rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+    /* 결과창 스타일 */
+    #restore-result {
+        background-color: #2d3436;
+        color: #ffffff;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid #4a4a4a;
+        font-family: monospace;
+        white-space: pre-wrap;
+        margin-top: 1rem;
+    }
+
+    /* 카드 스타일 */
+    .card {
+        border-color: #4a4a4a;
+    }
+
+    .card-header {
+        border-bottom-color: #4a4a4a;
+    }
+    </style>
+</body>
+</html>
