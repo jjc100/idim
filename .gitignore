@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Jupyter
+.ipynb_checkpoints
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Secrets and keys
+.env.local
+.env.*
+secrets.json
+*.pem
+*.key
+
+# Docker and backups
+docker-compose.override.yml
+.dockerignore
+*.tar
+backups/
+backup/
+immich_backup_*.tar
+backup_*.tar
+
+# Misc
+*.egg
+*.so
